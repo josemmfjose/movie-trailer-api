@@ -1,0 +1,53 @@
+{
+  "id": 27205,
+  "results": [
+    {
+      "iso_639_1": "en",
+      "iso_3166_1": "US",
+      "name": "Inception - Official Trailer",
+      "key": "YoHD9XEInc0",
+      "site": "YouTube",
+      "size": 1080,
+      "type": "Trailer",
+      "official": true,
+      "published_at": "2010-05-10T00:00:00.000Z",
+      "id": "533ec654c3a3685448000a15"
+    },
+    {
+      "iso_639_1": "en",
+      "iso_3166_1": "US",
+      "name": "Inception - Trailer 2",
+      "key": "66TuSJo4dZM",
+      "site": "YouTube",
+      "size": 1080,
+      "type": "Trailer",
+      "official": true,
+      "published_at": "2010-06-28T00:00:00.000Z",
+      "id": "605aa3d6d4a3c8003e9e8e6a"
+    },
+    {
+      "iso_639_1": "en",
+      "iso_3166_1": "US",
+      "name": "Inception - Behind the Scenes Featurette",
+      "key": "xbBr5MpCC3I",
+      "site": "YouTube",
+      "size": 720,
+      "type": "Featurette",
+      "official": true,
+      "published_at": "2010-08-01T00:00:00.000Z",
+      "id": "aabb22334455"
+    },
+    {
+      "iso_639_1": "en",
+      "iso_3166_1": "US",
+      "name": "Inception Extended Clip",
+      "key": "92a71def",
+      "site": "Vimeo",
+      "size": 480,
+      "type": "Clip",
+      "official": false,
+      "published_at": "2011-01-15T00:00:00.000Z",
+      "id": "ccdd55667788"
+    }
+  ]
+}

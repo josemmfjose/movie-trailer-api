@@ -1,0 +1,55 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/s3TBrRGB1iav7gFOCNx3H31MoES.jpg",
+      "genre_ids": [28, 878, 12],
+      "id": 27205,
+      "original_language": "en",
+      "original_title": "Inception",
+      "overview": "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.",
+      "popularity": 89.456,
+      "poster_path": "/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg",
+      "release_date": "2010-07-15",
+      "title": "Inception",
+      "video": false,
+      "vote_average": 8.369,
+      "vote_count": 36142
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [99],
+      "id": 592350,
+      "original_language": "en",
+      "original_title": "Inception: The Cobol Job",
+      "overview": "An animated prequel to the 2010 film that takes place before the events of the movie.",
+      "popularity": 12.345,
+      "poster_path": null,
+      "release_date": "2010-12-07",
+      "title": "Inception: The Cobol Job",
+      "video": false,
+      "vote_average": 7.1,
+      "vote_count": 248
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/qLGnGqr73Fg0n2saiN16LPGSYAQ.jpg",
+      "genre_ids": [99],
+      "id": 71650,
+      "original_language": "en",
+      "original_title": "Inception: Jump Right Into the Action",
+      "overview": "Behind-the-scenes documentary about the making of Inception.",
+      "popularity": 5.678,
+      "poster_path": "/abc123placeholder.jpg",
+      "release_date": "",
+      "title": "Inception: Jump Right Into the Action",
+      "video": false,
+      "vote_average": 7.3,
+      "vote_count": 52
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 3
+}

@@ -1,0 +1,88 @@
+{
+  "adult": false,
+  "backdrop_path": "/hZkgoQYus5dXo3H8T7Uef6DNknx.jpg",
+  "belongs_to_collection": null,
+  "budget": 63000000,
+  "genres": [
+    { "id": 18, "name": "Drama" },
+    { "id": 53, "name": "Thriller" },
+    { "id": 35, "name": "Comedy" }
+  ],
+  "homepage": "http://www.foxmovies.com/movies/fight-club",
+  "id": 550,
+  "imdb_id": "tt0137523",
+  "original_language": "en",
+  "original_title": "Fight Club",
+  "overview": "A ticking-Loss bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy. Their concept catches on, with underground \"fight clubs\" forming in every town, until an escalating spiral of violence threatens to destroy everything.",
+  "popularity": 73.248,
+  "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+  "production_companies": [
+    {
+      "id": 508,
+      "logo_path": "/7cxRWzi4LsVm4z7gRz2h4thepfD.png",
+      "name": "Regency Enterprises",
+      "origin_country": "US"
+    },
+    {
+      "id": 711,
+      "logo_path": "/tEiIH5QesdheJmDAqQkict2nftS.png",
+      "name": "Fox 2000 Pictures",
+      "origin_country": "US"
+    }
+  ],
+  "production_countries": [
+    { "iso_3166_1": "US", "name": "United States of America" }
+  ],
+  "release_date": "1999-10-15",
+  "revenue": 100853753,
+  "runtime": 139,
+  "spoken_languages": [
+    { "english_name": "English", "iso_639_1": "en", "name": "English" }
+  ],
+  "status": "Released",
+  "tagline": "Mischief. Mayhem. Soap.",
+  "title": "Fight Club",
+  "video": false,
+  "vote_average": 8.438,
+  "vote_count": 28753,
+  "videos": {
+    "results": [
+      {
+        "iso_639_1": "en",
+        "iso_3166_1": "US",
+        "name": "Fight Club - Trailer",
+        "key": "qtRKdVHc-cE",
+        "site": "YouTube",
+        "size": 1080,
+        "type": "Trailer",
+        "official": true,
+        "published_at": "2015-07-14T12:00:06.000Z",
+        "id": "5c9294240e0a267cd516835f"
+      },
+      {
+        "iso_639_1": "en",
+        "iso_3166_1": "US",
+        "name": "Fight Club | #TBT Trailer",
+        "key": "BdJKm16Co6M",
+        "site": "YouTube",
+        "size": 1080,
+        "type": "Trailer",
+        "official": true,
+        "published_at": "2014-10-02T19:20:22.000Z",
+        "id": "5e382d1b4ca676001453826c"
+      },
+      {
+        "iso_639_1": "en",
+        "iso_3166_1": "US",
+        "name": "Behind the Scenes of Fight Club",
+        "key": "f_cPa99grCA",
+        "site": "Vimeo",
+        "size": 720,
+        "type": "Behind the Scenes",
+        "official": false,
+        "published_at": "2012-03-22T10:00:00.000Z",
+        "id": "aabb11223344"
+      }
+    ]
+  }
+}

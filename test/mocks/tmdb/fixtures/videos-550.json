@@ -1,0 +1,41 @@
+{
+  "id": 550,
+  "results": [
+    {
+      "iso_639_1": "en",
+      "iso_3166_1": "US",
+      "name": "Fight Club - Trailer",
+      "key": "qtRKdVHc-cE",
+      "site": "YouTube",
+      "size": 1080,
+      "type": "Trailer",
+      "official": true,
+      "published_at": "2015-07-14T12:00:06.000Z",
+      "id": "5c9294240e0a267cd516835f"
+    },
+    {
+      "iso_639_1": "en",
+      "iso_3166_1": "US",
+      "name": "Fight Club | #TBT Trailer",
+      "key": "BdJKm16Co6M",
+      "site": "YouTube",
+      "size": 1080,
+      "type": "Trailer",
+      "official": true,
+      "published_at": "2014-10-02T19:20:22.000Z",
+      "id": "5e382d1b4ca676001453826c"
+    },
+    {
+      "iso_639_1": "en",
+      "iso_3166_1": "US",
+      "name": "Behind the Scenes of Fight Club",
+      "key": "f_cPa99grCA",
+      "site": "Vimeo",
+      "size": 720,
+      "type": "Behind the Scenes",
+      "official": false,
+      "published_at": "2012-03-22T10:00:00.000Z",
+      "id": "aabb11223344"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "#shared/*": ["./src/shared/*"],
+      "#adapters/*": ["./src/adapters/*"],
+      "#lib/*": ["./src/lib/*"],
+      "#data/*": ["./src/data/*"],
+      "#clients/*": ["./src/clients/*"],
+      "#validators/*": ["./src/validators/*"],
+      "#middleware/*": ["./src/middleware/*"]
+    },
+    "skipLibCheck": true
+  },
+  "include": ["src", "__tests__"],
+  "exclude": ["node_modules", "dist"]
+}

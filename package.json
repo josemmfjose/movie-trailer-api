@@ -1,0 +1,47 @@
+{
+  "name": "movie-trailer-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "bun run esbuild.config.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run __tests__/unit",
+    "test:integration": "vitest run __tests__/integration --timeout=30000",
+    "test:e2e": "vitest run __tests__/e2e --timeout=60000",
+    "test:ci": "docker compose -f docker-compose.test.yml up -d && bun run localstack:wait && bun test && docker compose -f docker-compose.test.yml down",
+    "test:coverage": "vitest run --coverage",
+    "localstack:up": "docker compose -f docker-compose.test.yml up -d",
+    "localstack:down": "docker compose -f docker-compose.test.yml down",
+    "localstack:wait": "curl --retry 20 --retry-delay 2 --retry-connrefused -sf http://localhost:4566/_localstack/health > /dev/null",
+    "cdk:synth": "npx cdk synth",
+    "cdk:deploy": "npx cdk deploy --require-approval never",
+    "cdk:local:deploy": "npx cdklocal deploy --require-approval never && bun run cdk:local:seed",
+    "cdk:local:bootstrap": "npx cdklocal bootstrap",
+    "cdk:local:seed": "aws --endpoint-url=http://localhost:4566 --region us-east-1 secretsmanager put-secret-value --secret-id tmdb-api-key --secret-string '{\"apiKey\":\"test-tmdb-key-for-integration\"}'",
+    "lint": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.750.0",
+    "@aws-sdk/client-secrets-manager": "^3.750.0",
+    "@aws-sdk/util-dynamodb": "^3.750.0",
+    "brushless": "^0.2.0",
+    "ioredis": "^5.6.0",
+    "rotorise": "^0.2.1",
+    "type-fest": "^4.35.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.15.0",
+    "@vitest/coverage-v8": "^3.1.0",
+    "aws-cdk": "^2.180.0",
+    "aws-cdk-lib": "^2.180.0",
+    "aws-cdk-local": "^3.0.3",
+    "constructs": "^10.4.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
