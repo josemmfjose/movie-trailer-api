@@ -6,6 +6,7 @@ import { SecretsClient, getSecret } from '../../clients/secrets'
 import * as RedisCache from '../../lib/redis-cache'
 import { searchMovies } from '../../lib/search'
 import { mapErrorToResponse } from '../../middleware/error-mapper'
+import { withRequestLogging } from '../../middleware/request-logger'
 import { securityHeaders } from '../../middleware/security-headers'
 import { inject } from '../../shared/inject'
 import { ok, okOr, safeTry } from '../../shared/result'
@@ -25,16 +26,19 @@ const deps = inject({
   ),
 )
 
-export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> =>
-  okOr(
-    await safeTry(async function* () {
-      const params = yield* ok(validateSearch(event.queryStringParameters ?? null))
-      const result = yield* ok(searchMovies(deps)(params))
-      return {
-        statusCode: 200,
-        headers: securityHeaders,
-        body: JSON.stringify({ data: result.results, meta: result.meta }),
-      }
-    }),
-    mapErrorToResponse,
-  )
+export const handler = withRequestLogging(
+  'search',
+  async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> =>
+    okOr(
+      await safeTry(async function* () {
+        const params = yield* ok(validateSearch(event.queryStringParameters ?? null))
+        const result = yield* ok(searchMovies(deps)(params))
+        return {
+          statusCode: 200,
+          headers: securityHeaders,
+          body: JSON.stringify({ data: result.results, meta: result.meta }),
+        }
+      }),
+      mapErrorToResponse,
+    ),
+)

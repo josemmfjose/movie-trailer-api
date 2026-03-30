@@ -61,8 +61,6 @@ export const putItem =
               {
                 PK: cacheKeys.pk(entry.entityType, entry.language),
                 SK: cacheKeys.sk(entry.cacheKey),
-                GSI1PK: cacheKeys.gsi1pk(entry.entityType),
-                GSI1SK: cacheKeys.gsi1sk(entry.freshUntil),
                 ...entry,
               },
               { removeUndefinedValues: true },

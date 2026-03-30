@@ -11,6 +11,7 @@ import type {
   TrailersResponse,
 } from '../shared/types'
 import { buildTrailersCacheKey } from './cache-keys'
+import { TmdbVideosResultSchema } from './cache-schemas'
 import { transformTrailers } from './transformers'
 import { withCache } from './with-cache'
 
@@ -21,7 +22,9 @@ export const getTrailers =
       const cacheKey = buildTrailersCacheKey(id, language)
 
       const { data, status } = yield* ok(
-        withCache(deps, cacheKey, TTL.TRAILERS.redis, () => deps.tmdb.getTrailers(id, language)),
+        withCache(deps, cacheKey, TTL.TRAILERS.redis, TmdbVideosResultSchema, () =>
+          deps.tmdb.getTrailers(id, language),
+        ),
       )
 
       return buildResponse(data, status)

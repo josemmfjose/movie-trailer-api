@@ -18,6 +18,4 @@ const compositeKey = (...parts: string[]) => parts.join('#')
 export const cacheKeys = {
   pk: (entityType: string, language: string) => compositeKey(entityType, language),
   sk: (cacheKey: string) => cacheKey,
-  gsi1pk: (entityType: string) => entityType,
-  gsi1sk: (freshUntil: number) => String(freshUntil),
 }

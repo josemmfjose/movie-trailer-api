@@ -11,6 +11,7 @@ import type {
   TmdbMovieDetailResult,
 } from '../shared/types'
 import { buildDetailCacheKey } from './cache-keys'
+import { TmdbMovieDetailResultSchema } from './cache-schemas'
 import { transformMovieDetail, transformTrailers } from './transformers'
 import { withCache } from './with-cache'
 
@@ -21,7 +22,9 @@ export const getMovieDetail =
       const cacheKey = buildDetailCacheKey(id, language)
 
       const { data, status } = yield* ok(
-        withCache(deps, cacheKey, TTL.DETAIL.redis, () => deps.tmdb.getDetail(id, language)),
+        withCache(deps, cacheKey, TTL.DETAIL.redis, TmdbMovieDetailResultSchema, () =>
+          deps.tmdb.getDetail(id, language),
+        ),
       )
 
       return buildResponse(data, status)

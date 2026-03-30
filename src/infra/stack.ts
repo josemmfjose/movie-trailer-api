@@ -29,13 +29,6 @@ export class MovieTrailerApiStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     })
 
-    cacheTable.addGlobalSecondaryIndex({
-      indexName: 'GSI1',
-      partitionKey: { name: 'GSI1PK', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'GSI1SK', type: dynamodb.AttributeType.STRING },
-      projectionType: dynamodb.ProjectionType.ALL,
-    })
-
     // --- Secrets Manager ---
     const tmdbSecret = new secretsmanager.Secret(this, 'TmdbApiKey', {
       secretName: 'tmdb-api-key',

@@ -1,6 +1,7 @@
 import { GetItemCommand } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import * as CacheRepo from '#data/repositories/cache.repository'
 import { cacheKeys } from '#data/schemas/cache-entry'
 import { isError } from '#shared/result'
@@ -130,6 +131,9 @@ describe('DynamoDB Cache Repository Integration', () => {
   })
 })
 
+const TestDataSchema = z.object({ results: z.array(z.object({ title: z.string() })) })
+const SimpleSchema = z.object({ x: z.number() })
+
 describe('Redis Cache Integration', () => {
   it('set stores and get retrieves JSON data', async () => {
     const redisClient = { client: redis }
@@ -142,8 +146,9 @@ describe('Redis Cache Integration', () => {
     )
     expect(isError(setResult)).toBe(false)
 
-    const getResult = await (await import('#lib/redis-cache')).get({ redisClient })<typeof data>(
+    const getResult = await (await import('#lib/redis-cache')).get({ redisClient })(
       'test-key',
+      TestDataSchema,
     )
     expect(isError(getResult)).toBe(false)
     if (isError(getResult)) return
@@ -152,10 +157,24 @@ describe('Redis Cache Integration', () => {
 
   it('get returns null for non-existent key', async () => {
     const redisClient = { client: redis }
-    const result = await (await import('#lib/redis-cache')).get({ redisClient })('nonexistent')
+    const result = await (await import('#lib/redis-cache')).get({ redisClient })(
+      'nonexistent',
+      TestDataSchema,
+    )
     expect(isError(result)).toBe(false)
     if (isError(result)) return
     expect(result).toBeNull()
+  })
+
+  it('get returns error for invalid cached shape', async () => {
+    const redisClient = { client: redis }
+    await redis.set('bad-shape', JSON.stringify({ wrong: 'data' }))
+
+    const result = await (await import('#lib/redis-cache')).get({ redisClient })(
+      'bad-shape',
+      TestDataSchema,
+    )
+    expect(isError(result)).toBe(true)
   })
 
   it('set respects TTL (key expires)', async () => {
@@ -163,14 +182,20 @@ describe('Redis Cache Integration', () => {
     await (await import('#lib/redis-cache')).set({ redisClient })('ttl-key', { x: 1 }, 100) // 100ms TTL
 
     // Immediately available
-    const r1 = await (await import('#lib/redis-cache')).get({ redisClient })('ttl-key')
+    const r1 = await (await import('#lib/redis-cache')).get({ redisClient })(
+      'ttl-key',
+      SimpleSchema,
+    )
     expect(isError(r1)).toBe(false)
     if (!isError(r1)) expect(r1).not.toBeNull()
 
     // Wait for TTL
     await new Promise((r) => setTimeout(r, 200))
 
-    const r2 = await (await import('#lib/redis-cache')).get({ redisClient })('ttl-key')
+    const r2 = await (await import('#lib/redis-cache')).get({ redisClient })(
+      'ttl-key',
+      SimpleSchema,
+    )
     expect(isError(r2)).toBe(false)
     if (!isError(r2)) expect(r2).toBeNull()
   })

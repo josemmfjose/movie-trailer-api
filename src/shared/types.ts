@@ -1,3 +1,4 @@
+import type { ZodTypeAny, output as ZodOutput } from 'zod'
 import type { AppError } from './errors'
 import type { ResultAsync } from './result'
 
@@ -94,7 +95,7 @@ export type MovieDataProvider = {
 }
 
 export type CacheService = {
-  get: <T>(key: string) => ResultAsync<T | null, AppError>
+  get: <S extends ZodTypeAny>(key: string, schema: S) => ResultAsync<ZodOutput<S> | null, AppError>
   set: <T>(key: string, data: T, ttlMs: number) => ResultAsync<void, AppError>
 }
 

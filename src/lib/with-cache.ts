@@ -1,19 +1,21 @@
 import type { PickDeep } from 'type-fest'
+import type { ZodTypeAny, output as ZodOutput } from 'zod'
 import type { AppError } from '../shared/errors'
 import { logger } from '../shared/logger'
 import type { ResultAsync } from '../shared/result'
 import { isError, ok, safeTry } from '../shared/result'
 import type { CacheStatus, ServiceDeps } from '../shared/types'
 
-export const withCache = <T>(
+export const withCache = <S extends ZodTypeAny>(
   deps: PickDeep<ServiceDeps, 'cache'>,
   cacheKey: string,
   ttlMs: number,
-  fetch: () => ResultAsync<T, AppError>,
-): ResultAsync<{ data: T; status: CacheStatus }, AppError> =>
+  schema: S,
+  fetch: () => ResultAsync<ZodOutput<S>, AppError>,
+): ResultAsync<{ data: ZodOutput<S>; status: CacheStatus }, AppError> =>
   safeTry(async function* () {
     // Cache read — handle errors gracefully, don't propagate
-    const cached = await deps.cache.get<T>(cacheKey)
+    const cached = await deps.cache.get(cacheKey, schema)
     if (!isError(cached) && cached != null) {
       logger.debug('cache_hit', { key: cacheKey })
       return { data: cached, status: 'HIT' }

@@ -6,6 +6,7 @@ import { TTL } from '../shared/ttl'
 import type { CacheStatus, SearchResponse, ServiceDeps, TmdbSearchResult } from '../shared/types'
 import type { SearchParams } from '../validators/search'
 import { buildSearchCacheKey } from './cache-keys'
+import { TmdbSearchResultSchema } from './cache-schemas'
 import { buildPaginationMeta, transformMovieSummary } from './transformers'
 import { withCache } from './with-cache'
 
@@ -20,7 +21,7 @@ export const searchMovies =
       })
 
       const { data, status } = yield* ok(
-        withCache(deps, cacheKey, TTL.SEARCH.redis, () =>
+        withCache(deps, cacheKey, TTL.SEARCH.redis, TmdbSearchResultSchema, () =>
           deps.tmdb.searchMovies(params.q, params.page, params.language),
         ),
       )
