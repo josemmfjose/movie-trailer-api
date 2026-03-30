@@ -4,7 +4,8 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import * as CacheRepo from '#data/repositories/cache.repository'
 import { cacheKeys } from '#data/schemas/cache-entry'
-import * as TwoTierCache from '#lib/two-tier-cache'
+import { get as redisGet, set as redisSet } from '#lib/redis-cache'
+import { get as cacheGet, set as cacheSet } from '#lib/two-tier-cache'
 import { isError } from '#shared/result'
 import { TABLE_NAME, createFlushRedis, createTestRedis, dynamodb, flushDynamo } from './setup'
 
@@ -137,9 +138,13 @@ const SimpleSchema = z.object({ x: z.number() })
 
 const twoTierRedis = createTestRedis(5)
 const flushTwoTierRedis = createFlushRedis(twoTierRedis)
-const twoTierDeps = {
+const clientDeps = {
   redisClient: { client: twoTierRedis },
   dynamoClient: { db: dynamodb, tableName: TABLE_NAME },
+}
+const twoTierDeps = {
+  redis: { get: redisGet(clientDeps), set: redisSet(clientDeps) },
+  dynamo: { getItem: CacheRepo.getItem(clientDeps), putItem: CacheRepo.putItem(clientDeps) },
 }
 
 describe('Two-Tier Cache Integration', () => {
@@ -154,7 +159,7 @@ describe('Two-Tier Cache Integration', () => {
 
   it('set writes to both Redis and DynamoDB', async () => {
     const data = { results: [{ title: 'Inception' }] }
-    const setResult = await TwoTierCache.set(twoTierDeps)('SEARCH:en-US:inception:1', data, 60_000)
+    const setResult = await cacheSet(twoTierDeps)('SEARCH:en-US:inception:1', data, 60_000)
     expect(isError(setResult)).toBe(false)
 
     // Verify Redis
@@ -173,9 +178,9 @@ describe('Two-Tier Cache Integration', () => {
 
   it('get returns from Redis (L1 hit)', async () => {
     const data = { results: [{ title: 'L1 Hit' }] }
-    await TwoTierCache.set(twoTierDeps)('SEARCH:en-US:l1test:1', data, 60_000)
+    await cacheSet(twoTierDeps)('SEARCH:en-US:l1test:1', data, 60_000)
 
-    const result = await TwoTierCache.get(twoTierDeps)('SEARCH:en-US:l1test:1', TestDataSchema)
+    const result = await cacheGet(twoTierDeps)('SEARCH:en-US:l1test:1', TestDataSchema)
     expect(isError(result)).toBe(false)
     if (isError(result)) return
     expect(result).toEqual(data)
@@ -185,7 +190,7 @@ describe('Two-Tier Cache Integration', () => {
     const data = { results: [{ title: 'L2 Fallback' }] }
 
     // Write to both tiers
-    await TwoTierCache.set(twoTierDeps)('MOVIE:en-US:999', data, 60_000)
+    await cacheSet(twoTierDeps)('MOVIE:en-US:999', data, 60_000)
     await new Promise((r) => setTimeout(r, 100))
 
     // Flush Redis only — DynamoDB still has the data
@@ -196,7 +201,7 @@ describe('Two-Tier Cache Integration', () => {
     expect(redisVal).toBeNull()
 
     // get should fall back to DynamoDB
-    const result = await TwoTierCache.get(twoTierDeps)('MOVIE:en-US:999', TestDataSchema)
+    const result = await cacheGet(twoTierDeps)('MOVIE:en-US:999', TestDataSchema)
     expect(isError(result)).toBe(false)
     if (isError(result)) return
     expect(result).toEqual(data)
@@ -205,12 +210,12 @@ describe('Two-Tier Cache Integration', () => {
   it('L2 hit backfills Redis', async () => {
     const data = { results: [{ title: 'Backfill' }] }
 
-    await TwoTierCache.set(twoTierDeps)('TRAILER:en-US:888', data, 60_000)
+    await cacheSet(twoTierDeps)('TRAILER:en-US:888', data, 60_000)
     await new Promise((r) => setTimeout(r, 100))
     await flushTwoTierRedis()
 
     // Trigger L2 hit + backfill
-    await TwoTierCache.get(twoTierDeps)('TRAILER:en-US:888', TestDataSchema)
+    await cacheGet(twoTierDeps)('TRAILER:en-US:888', TestDataSchema)
     await new Promise((r) => setTimeout(r, 50))
 
     // Redis should now have the data again
@@ -220,7 +225,7 @@ describe('Two-Tier Cache Integration', () => {
   })
 
   it('get returns null when both tiers miss', async () => {
-    const result = await TwoTierCache.get(twoTierDeps)(
+    const result = await cacheGet(twoTierDeps)(
       'SEARCH:en-US:nonexistent:1',
       TestDataSchema,
     )
@@ -243,7 +248,7 @@ describe('Two-Tier Cache Integration', () => {
       createdAt: new Date().toISOString(),
     })
 
-    const result = await TwoTierCache.get(twoTierDeps)('SEARCH:en-US:expired:1', TestDataSchema)
+    const result = await cacheGet(twoTierDeps)('SEARCH:en-US:expired:1', TestDataSchema)
     expect(isError(result)).toBe(false)
     if (isError(result)) return
     expect(result).toBeNull()
@@ -262,7 +267,7 @@ describe('Two-Tier Cache Integration', () => {
       createdAt: new Date().toISOString(),
     })
 
-    const result = await TwoTierCache.get(twoTierDeps)('MOVIE:en-US:777', TestDataSchema)
+    const result = await cacheGet(twoTierDeps)('MOVIE:en-US:777', TestDataSchema)
     expect(isError(result)).toBe(false)
     if (isError(result)) return
     expect(result).toBeNull()

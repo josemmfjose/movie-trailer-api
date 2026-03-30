@@ -10,7 +10,7 @@ type SecretsDeps = {
 
 export const SecretsClient = () => {
   const client = new SecretsManagerClient(localStackConfig())
-  return { secretsClient: client }
+  return { getSecret: getSecret({ secretsClient: client }) }
 }
 
 export const getSecret = (deps: SecretsDeps) => {

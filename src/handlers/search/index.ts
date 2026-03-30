@@ -1,11 +1,13 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda'
-import * as TmdbSearch from '#adapters/tmdb-search.adapter'
+import { searchMovies as tmdbSearchMovies } from '#adapters/tmdb-search.adapter'
 import { createTmdbClient } from '#adapters/tmdb.client'
 import { DynamoClient } from '#clients/dynamo'
 import { RedisClient } from '#clients/redis'
-import { SecretsClient, getSecret } from '#clients/secrets'
+import { SecretsClient } from '#clients/secrets'
+import { getItem, putItem } from '#data/repositories/cache.repository'
+import { get as redisGet, set as redisSet } from '#lib/redis-cache'
 import { searchMovies } from '#lib/search'
-import * as TwoTierCache from '#lib/two-tier-cache'
+import { get as cacheGet, set as cacheSet } from '#lib/two-tier-cache'
 import { mapErrorToResponse } from '#middleware/error-mapper'
 import { withRequestLogging } from '#middleware/request-logger'
 import { securityHeaders } from '#middleware/security-headers'
@@ -14,18 +16,18 @@ import { ok, okOr, safeTry } from '#shared/result'
 import { validateSearch } from '#validators/search'
 
 const deps = inject({
-  tmdb: { searchMovies: TmdbSearch.searchMovies },
-  cache: { get: TwoTierCache.get, set: TwoTierCache.set },
+  tmdb: { searchMovies: tmdbSearchMovies },
+  cache: { get: cacheGet, set: cacheSet },
 })(
   inject({
     httpClient: createTmdbClient,
-    redisClient: () => RedisClient(),
-    dynamoClient: () => DynamoClient(),
-  })(
-    inject({
-      secretClient: { getSecret },
-    })(SecretsClient()),
-  ),
+    redis: { get: redisGet, set: redisSet },
+    dynamo: { getItem, putItem },
+  })({
+    secretClient: SecretsClient(),
+    redisClient: RedisClient(),
+    dynamoClient: DynamoClient(),
+  }),
 )
 
 export const handler = withRequestLogging(
