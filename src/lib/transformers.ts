@@ -7,7 +7,7 @@ import type {
   TmdbSearchResult,
   TmdbVideo,
   Trailer,
-} from '../shared/types'
+} from '#shared/types'
 
 const tmdbImageUrl = (path: string | null, size: string): string | null =>
   path ? `https://image.tmdb.org/t/p/${size}${path}` : null

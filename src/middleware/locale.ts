@@ -1,4 +1,4 @@
-import type { Language } from '../shared/types'
+import type { Language } from '#shared/types'
 
 const LANGUAGE_RE = /^[a-z]{2}(-[A-Z]{2})?$/
 const LANGUAGE_RE_I = /^[a-z]{2}(-[A-Z]{2})?$/i

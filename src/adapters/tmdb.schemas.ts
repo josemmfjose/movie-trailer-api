@@ -5,7 +5,7 @@ import type {
   TmdbSearchResult,
   TmdbVideo,
   TmdbVideosResult,
-} from '../shared/types'
+} from '#shared/types'
 
 // --- Raw TMDB API Schemas (snake_case) ---
 

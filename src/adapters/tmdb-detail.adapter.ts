@@ -1,7 +1,7 @@
-import type { AppError } from '../shared/errors'
-import type { ResultAsync } from '../shared/result'
-import { ok, safeTry } from '../shared/result'
-import type { TmdbMovieDetailResult, TmdbVideosResult } from '../shared/types'
+import type { AppError } from '#shared/errors'
+import type { ResultAsync } from '#shared/result'
+import { ok, safeTry } from '#shared/result'
+import type { TmdbMovieDetailResult, TmdbVideosResult } from '#shared/types'
 import type { HttpClient } from './tmdb.client'
 import {
   TmdbRawMovieDetailSchema,

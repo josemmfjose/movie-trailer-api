@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda'
-import { logger } from '../shared/logger'
+import { logger } from '#shared/logger'
 
 export const withRequestLogging =
   (handlerName: string, fn: (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>) =>

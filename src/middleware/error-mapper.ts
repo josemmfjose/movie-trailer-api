@@ -1,4 +1,4 @@
-import type { ApiErrorCode, AppError, InternalErrorCode } from '../shared/errors'
+import type { ApiErrorCode, AppError, InternalErrorCode } from '#shared/errors'
 import { securityHeaders } from './security-headers'
 
 type ErrorResponse = {

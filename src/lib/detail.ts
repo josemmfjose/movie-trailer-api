@@ -1,15 +1,15 @@
 import type { PickDeep } from 'type-fest'
-import type { AppError } from '../shared/errors'
-import type { ResultAsync } from '../shared/result'
-import { ok, safeTry } from '../shared/result'
-import { TTL } from '../shared/ttl'
+import type { AppError } from '#shared/errors'
+import type { ResultAsync } from '#shared/result'
+import { ok, safeTry } from '#shared/result'
+import { TTL } from '#shared/ttl'
 import type {
   CacheStatus,
   Language,
   MovieDetailResponse,
   ServiceDeps,
   TmdbMovieDetailResult,
-} from '../shared/types'
+} from '#shared/types'
 import { buildDetailCacheKey } from './cache-keys'
 import { TmdbMovieDetailResultSchema } from './cache-schemas'
 import { transformMovieDetail, transformTrailers } from './transformers'

@@ -5,9 +5,9 @@ import {
   PutItemCommand,
 } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
-import { type AppError, InternalError } from '../../shared/errors'
-import type { ResultAsync } from '../../shared/result'
-import { fromPromise } from '../../shared/result'
+import { type AppError, InternalError } from '#shared/errors'
+import type { ResultAsync } from '#shared/result'
+import { fromPromise } from '#shared/result'
 import { type CacheEntry, CacheEntrySchema, cacheKeys } from '../schemas/cache-entry'
 
 type CacheDeps = {

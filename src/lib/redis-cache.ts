@@ -1,9 +1,9 @@
 import type Redis from 'ioredis'
 import type { ZodTypeAny, output as ZodOutput } from 'zod'
-import type { AppError } from '../shared/errors'
-import { InternalError } from '../shared/errors'
-import type { ResultAsync } from '../shared/result'
-import { fromPromise } from '../shared/result'
+import type { AppError } from '#shared/errors'
+import { InternalError } from '#shared/errors'
+import type { ResultAsync } from '#shared/result'
+import { fromPromise } from '#shared/result'
 
 type RedisDeps = { redisClient: { client: Redis } }
 

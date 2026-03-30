@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { ApiError, type AppError } from '../shared/errors'
-import type { Result } from '../shared/result'
-import type { Language } from '../shared/types'
+import { ApiError, type AppError } from '#shared/errors'
+import type { Result } from '#shared/result'
+import type { Language } from '#shared/types'
 
 const SearchParamsSchema = z.object({
   q: z

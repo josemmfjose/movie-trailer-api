@@ -1,5 +1,5 @@
-import { ApiError, type AppError } from '../shared/errors'
-import type { Result } from '../shared/result'
+import { ApiError, type AppError } from '#shared/errors'
+import type { Result } from '#shared/result'
 
 export const validateMovieId = (raw: string | undefined): Result<number, AppError> => {
   if (raw == null || raw.trim() === '') {

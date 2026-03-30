@@ -1,10 +1,10 @@
 import type { PickDeep } from 'type-fest'
 import type { ZodTypeAny, output as ZodOutput } from 'zod'
-import type { AppError } from '../shared/errors'
-import { logger } from '../shared/logger'
-import type { ResultAsync } from '../shared/result'
-import { isError, ok, safeTry } from '../shared/result'
-import type { CacheStatus, ServiceDeps } from '../shared/types'
+import type { AppError } from '#shared/errors'
+import { logger } from '#shared/logger'
+import type { ResultAsync } from '#shared/result'
+import { isError, ok, safeTry } from '#shared/result'
+import type { CacheStatus, ServiceDeps } from '#shared/types'
 
 export const withCache = <S extends ZodTypeAny>(
   deps: PickDeep<ServiceDeps, 'cache'>,

@@ -1,7 +1,7 @@
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager'
-import { type AppError, InternalError } from '../shared/errors'
-import type { ResultAsync } from '../shared/result'
-import { fromPromise } from '../shared/result'
+import { type AppError, InternalError } from '#shared/errors'
+import type { ResultAsync } from '#shared/result'
+import { fromPromise } from '#shared/result'
 import { localStackConfig } from './localstack'
 
 type SecretsDeps = {
