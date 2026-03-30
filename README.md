@@ -15,18 +15,18 @@ All endpoints support `?language=es-ES` and `Accept-Language` header for locale.
 ## Architecture
 
 ```
-Client -> CloudFront CDN -> API Gateway (throttled) -> Lambda -> Redis -> TMDB API
+Client -> CloudFront CDN -> API Gateway (throttled) -> Lambda -> Redis (L1) -> TMDB API
                                                           |
                                                           v
-                                                       DynamoDB
+                                                     DynamoDB (L2)
 ```
 
 - **Lambda** (Node.js 20, ARM64) - per-endpoint functions with least-privilege IAM
 - **API Gateway HTTP API v2** - rate-limited (50 req/s sustained, 100 burst)
 - **CloudFront** - global edge caching, HTTPS-only, cache by query string + Accept-Language
-- **Redis** - hot cache (5min search, 30min trailers, 1hr detail)
-- **DynamoDB** - persistent cache with TTL + stale-while-revalidate
+- **Two-tier cache** - Redis L1 (hot, 5min–1hr TTL) with DynamoDB L2 fallback (persistent, freshness-aware). L2 hits backfill Redis automatically.
 - **Secrets Manager** - TMDB API key, cached in-process
+- **CloudWatch alarms** - error rate, p99 latency, throttles per Lambda + API Gateway 5xx
 
 ### Resilience
 
@@ -34,6 +34,15 @@ Client -> CloudFront CDN -> API Gateway (throttled) -> Lambda -> Redis -> TMDB A
 - **Retry with jittered backoff** (2 retries, 200ms base, 2s max) for 5xx and network errors
 - **3s request timeout** with AbortController
 - **Fire-and-forget cache writes** - never block the response on cache failures
+- **Graceful degradation** - cache read errors are logged and skipped, never propagated
+
+### Patterns
+
+- **Result type** with generator composition (`safeTry`/`yield* ok()`) for typed error handling without try-catch
+- **Typed DI** via `inject()` — compile-time safe, enforces dependency key names, no runtime container
+- **Processor/handler split** — processors own the full request lifecycle (validation -> business logic -> error mapping -> response), handlers just wire real deps. Processors are testable with injected deps and fake events.
+- **Structured error taxonomy** — `ApiError` (visible to client) vs `InternalError` (logged only) with exhaustive status mapping
+- **Schema-validated caching** — Redis and DynamoDB cache reads are validated with Zod before returning, preventing corrupt cached data from propagating
 
 ## Prerequisites
 
@@ -46,7 +55,7 @@ Client -> CloudFront CDN -> API Gateway (throttled) -> Lambda -> Redis -> TMDB A
 ```bash
 bun install                                      # install dependencies
 docker compose -f docker-compose.test.yml up -d  # start LocalStack + Redis + TMDB mock
-bun run test                                     # run ALL tests (179 tests)
+bun run test                                     # run ALL tests (184 tests)
 ```
 
 That's it. The Docker Compose stack provides everything the tests need:
@@ -54,7 +63,7 @@ That's it. The Docker Compose stack provides everything the tests need:
 | Service        | Port | Purpose                                      |
 |----------------|------|----------------------------------------------|
 | LocalStack     | 4566 | DynamoDB, Secrets Manager (AWS services mock) |
-| Redis          | 6379 | Hot cache layer                               |
+| Redis          | 6379 | Hot cache layer (L1)                          |
 | TMDB Mock      | 8080 | Stubs TMDB API responses for integration tests|
 
 ## TMDB API Setup
@@ -122,6 +131,9 @@ The script builds a fake `APIGatewayProxyEventV2` and calls the handler function
 | `bun run cdk:synth`        | Synthesize the CDK CloudFormation template              |
 | `bun run cdk:deploy`       | Deploy to AWS                                           |
 | `bun run cdk:local:deploy` | Deploy to LocalStack and seed the TMDB secret           |
+| `bun run redis:cli`        | Interactive Redis CLI session                           |
+| `bun run redis:keys`       | List all cached Redis keys                              |
+| `bun run dynamo:scan`      | Scan the DynamoDB cache table                           |
 
 ## Project Structure
 
@@ -129,13 +141,15 @@ The script builds a fake `APIGatewayProxyEventV2` and calls the handler function
 src/
   adapters/       # TMDB API adapters (search, detail, trailers)
   clients/        # AWS SDK + Redis client factories
-  data/           # DynamoDB cache repository
-  handlers/       # Lambda entry points (search, detail, trailers)
-  infra/          # CDK stack definition
-  lib/            # Business logic (search, detail, trailers, caching)
-  middleware/     # Lambda middleware (security headers, error handling)
-  shared/         # Result type, DI (inject), types, logger, errors
+  data/           # DynamoDB cache repository + schemas
+  handlers/       # Lambda entry points + processors
+  infra/          # CDK stack (Lambdas, API Gateway, CloudFront, alarms)
+  lib/            # Business logic, two-tier cache, transformers
+  middleware/     # Security headers, error mapping, request logging, locale
+  shared/         # Result type, inject(), types, logger, errors
   validators/     # Zod schemas for request validation
+mocks/
+  tmdb/           # TMDB mock server (Docker) + JSON fixtures
 __tests__/
   unit/           # Pure logic tests (no I/O)
   integration/    # Tests against LocalStack + Redis + TMDB mock
