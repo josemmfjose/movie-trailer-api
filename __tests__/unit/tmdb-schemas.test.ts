@@ -13,7 +13,7 @@ import {
 } from '#adapters/tmdb.schemas'
 
 // Load real fixture files
-const fixturesDir = resolve(__dirname, '../../test/mocks/tmdb/fixtures')
+const fixturesDir = resolve(__dirname, '../../mocks/tmdb/fixtures')
 const searchFixture = JSON.parse(
   readFileSync(resolve(fixturesDir, 'search-inception.json'), 'utf8'),
 )

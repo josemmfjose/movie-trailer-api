@@ -26,6 +26,6 @@ services:
       retries: 5
 
   tmdb-mock:
-    build: ./test/mocks/tmdb
+    build: ./mocks/tmdb
     ports:
       - "8080:8080"
