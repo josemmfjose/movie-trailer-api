@@ -20,11 +20,11 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'node',
-      include: ['__tests__/**/*.test.ts'],
+      include: ['src/**/*.test.ts', '__tests__/**/*.test.ts'],
       coverage: {
         provider: 'v8',
         include: ['src/**/*.ts'],
-        exclude: ['src/infra/**', 'src/handlers/**'],
+        exclude: ['src/infra/**', 'src/handlers/**', 'src/**/*.test.ts'],
       },
     },
   }

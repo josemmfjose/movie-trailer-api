@@ -139,19 +139,18 @@ The script builds a fake `APIGatewayProxyEventV2` and calls the handler function
 
 ```
 src/
-  adapters/       # TMDB API adapters (search, detail, trailers)
+  adapters/       # TMDB API adapters (search, detail, trailers) + tests
   clients/        # AWS SDK + Redis client factories
   data/           # DynamoDB cache repository + schemas
   handlers/       # Lambda entry points + processors
   infra/          # CDK stack (Lambdas, API Gateway, CloudFront, alarms)
-  lib/            # Business logic, two-tier cache, transformers
-  middleware/     # Security headers, error mapping, request logging, locale
-  shared/         # Result type, inject(), types, logger, errors
-  validators/     # Zod schemas for request validation
+  lib/            # Business logic, two-tier cache, transformers + tests
+  middleware/     # Security headers, error mapping, request logging, locale + tests
+  shared/         # Result type, inject(), types, logger, errors + tests
+  validators/     # Zod schemas for request validation + tests
 mocks/
   tmdb/           # TMDB mock server (Docker) + JSON fixtures
 __tests__/
-  unit/           # Pure logic tests (no I/O)
   integration/    # Tests against LocalStack + Redis + TMDB mock
   e2e/            # Tests against real TMDB API
 ```
