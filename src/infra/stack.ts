@@ -5,6 +5,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2'
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations'
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront'
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
@@ -165,6 +166,60 @@ export class MovieTrailerApiStack extends cdk.Stack {
         originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
       },
       priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
+    })
+
+    // --- CloudWatch Alarms ---
+    for (const fn of lambdas) {
+      // Error rate: fires if >5 errors in a 5-minute window
+      fn.metricErrors({ period: cdk.Duration.minutes(5) }).createAlarm(this, `${fn.node.id}ErrorAlarm`, {
+        alarmName: `${fn.functionName}-error-rate`,
+        threshold: 5,
+        evaluationPeriods: 1,
+        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      })
+
+      // P99 latency: fires if >10s for 2 consecutive periods
+      fn.metricDuration({ statistic: 'p99', period: cdk.Duration.minutes(5) }).createAlarm(
+        this,
+        `${fn.node.id}LatencyAlarm`,
+        {
+          alarmName: `${fn.functionName}-p99-latency`,
+          threshold: 10_000,
+          evaluationPeriods: 2,
+          comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+          treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+        },
+      )
+
+      // Throttles: fires if any invocations are throttled
+      fn.metricThrottles({ period: cdk.Duration.minutes(5) }).createAlarm(
+        this,
+        `${fn.node.id}ThrottleAlarm`,
+        {
+          alarmName: `${fn.functionName}-throttles`,
+          threshold: 0,
+          evaluationPeriods: 1,
+          comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+          treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+        },
+      )
+    }
+
+    // API Gateway 5xx rate: fires if >10 server errors in 5 minutes
+    new cloudwatch.Alarm(this, 'ApiGateway5xxAlarm', {
+      alarmName: 'movie-trailer-api-5xx',
+      metric: new cloudwatch.Metric({
+        namespace: 'AWS/ApiGateway',
+        metricName: '5xx',
+        dimensionsMap: { ApiId: httpApi.httpApiId },
+        statistic: 'Sum',
+        period: cdk.Duration.minutes(5),
+      }),
+      threshold: 10,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
     })
 
     // --- Outputs ---

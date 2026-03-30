@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import * as CacheRepo from '#data/repositories/cache.repository'
 import { cacheKeys } from '#data/schemas/cache-entry'
+import * as TwoTierCache from '#lib/two-tier-cache'
 import { isError } from '#shared/result'
 import { TABLE_NAME, createFlushRedis, createTestRedis, dynamodb, flushDynamo } from './setup'
 
@@ -133,6 +134,140 @@ describe('DynamoDB Cache Repository Integration', () => {
 
 const TestDataSchema = z.object({ results: z.array(z.object({ title: z.string() })) })
 const SimpleSchema = z.object({ x: z.number() })
+
+const twoTierRedis = createTestRedis(5)
+const flushTwoTierRedis = createFlushRedis(twoTierRedis)
+const twoTierDeps = {
+  redisClient: { client: twoTierRedis },
+  dynamoClient: { db: dynamodb, tableName: TABLE_NAME },
+}
+
+describe('Two-Tier Cache Integration', () => {
+  beforeAll(async () => {
+    await twoTierRedis.connect().catch(() => {})
+  })
+
+  afterEach(async () => {
+    await flushTwoTierRedis()
+    await flushDynamo()
+  })
+
+  it('set writes to both Redis and DynamoDB', async () => {
+    const data = { results: [{ title: 'Inception' }] }
+    const setResult = await TwoTierCache.set(twoTierDeps)('SEARCH:en-US:inception:1', data, 60_000)
+    expect(isError(setResult)).toBe(false)
+
+    // Verify Redis
+    const redisVal = await twoTierRedis.get('SEARCH:en-US:inception:1')
+    expect(redisVal).not.toBeNull()
+    expect(JSON.parse(redisVal!)).toEqual(data)
+
+    // Verify DynamoDB (fire-and-forget, small delay)
+    await new Promise((r) => setTimeout(r, 100))
+    const dynamoResult = await CacheRepo.getItem(cacheDeps)('SEARCH', 'inception:1', 'en-US')
+    expect(isError(dynamoResult)).toBe(false)
+    if (isError(dynamoResult) || !dynamoResult) return
+    expect(JSON.parse(dynamoResult.data)).toEqual(data)
+    expect(dynamoResult.freshUntil).toBeGreaterThan(Date.now())
+  })
+
+  it('get returns from Redis (L1 hit)', async () => {
+    const data = { results: [{ title: 'L1 Hit' }] }
+    await TwoTierCache.set(twoTierDeps)('SEARCH:en-US:l1test:1', data, 60_000)
+
+    const result = await TwoTierCache.get(twoTierDeps)('SEARCH:en-US:l1test:1', TestDataSchema)
+    expect(isError(result)).toBe(false)
+    if (isError(result)) return
+    expect(result).toEqual(data)
+  })
+
+  it('get falls back to DynamoDB when Redis misses (L2 hit)', async () => {
+    const data = { results: [{ title: 'L2 Fallback' }] }
+
+    // Write to both tiers
+    await TwoTierCache.set(twoTierDeps)('MOVIE:en-US:999', data, 60_000)
+    await new Promise((r) => setTimeout(r, 100))
+
+    // Flush Redis only — DynamoDB still has the data
+    await flushTwoTierRedis()
+
+    // Verify Redis is empty
+    const redisVal = await twoTierRedis.get('MOVIE:en-US:999')
+    expect(redisVal).toBeNull()
+
+    // get should fall back to DynamoDB
+    const result = await TwoTierCache.get(twoTierDeps)('MOVIE:en-US:999', TestDataSchema)
+    expect(isError(result)).toBe(false)
+    if (isError(result)) return
+    expect(result).toEqual(data)
+  })
+
+  it('L2 hit backfills Redis', async () => {
+    const data = { results: [{ title: 'Backfill' }] }
+
+    await TwoTierCache.set(twoTierDeps)('TRAILER:en-US:888', data, 60_000)
+    await new Promise((r) => setTimeout(r, 100))
+    await flushTwoTierRedis()
+
+    // Trigger L2 hit + backfill
+    await TwoTierCache.get(twoTierDeps)('TRAILER:en-US:888', TestDataSchema)
+    await new Promise((r) => setTimeout(r, 50))
+
+    // Redis should now have the data again
+    const redisVal = await twoTierRedis.get('TRAILER:en-US:888')
+    expect(redisVal).not.toBeNull()
+    expect(JSON.parse(redisVal!)).toEqual(data)
+  })
+
+  it('get returns null when both tiers miss', async () => {
+    const result = await TwoTierCache.get(twoTierDeps)(
+      'SEARCH:en-US:nonexistent:1',
+      TestDataSchema,
+    )
+    expect(isError(result)).toBe(false)
+    if (isError(result)) return
+    expect(result).toBeNull()
+  })
+
+  it('get returns null for expired DynamoDB entry', async () => {
+    // Write directly to DynamoDB with an already-expired freshUntil
+    const now = Date.now()
+    await CacheRepo.putItem(cacheDeps)({
+      entityType: 'SEARCH',
+      cacheKey: 'expired:1',
+      language: 'en-US',
+      data: JSON.stringify({ results: [{ title: 'Stale' }] }),
+      freshUntil: now - 1000,
+      staleUntil: now + 900_000,
+      ttl: Math.floor((now + 900_000) / 1000),
+      createdAt: new Date().toISOString(),
+    })
+
+    const result = await TwoTierCache.get(twoTierDeps)('SEARCH:en-US:expired:1', TestDataSchema)
+    expect(isError(result)).toBe(false)
+    if (isError(result)) return
+    expect(result).toBeNull()
+  })
+
+  it('get returns null when DynamoDB data fails schema validation', async () => {
+    const now = Date.now()
+    await CacheRepo.putItem(cacheDeps)({
+      entityType: 'MOVIE',
+      cacheKey: '777',
+      language: 'en-US',
+      data: JSON.stringify({ wrong: 'shape' }),
+      freshUntil: now + 300_000,
+      staleUntil: now + 900_000,
+      ttl: Math.floor((now + 900_000) / 1000),
+      createdAt: new Date().toISOString(),
+    })
+
+    const result = await TwoTierCache.get(twoTierDeps)('MOVIE:en-US:777', TestDataSchema)
+    expect(isError(result)).toBe(false)
+    if (isError(result)) return
+    expect(result).toBeNull()
+  })
+})
 
 describe('Redis Cache Integration', () => {
   it('set stores and get retrieves JSON data', async () => {

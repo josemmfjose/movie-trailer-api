@@ -1,10 +1,11 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda'
 import * as TmdbDetail from '#adapters/tmdb-detail.adapter'
 import { createTmdbClient } from '#adapters/tmdb.client'
+import { DynamoClient } from '#clients/dynamo'
 import { RedisClient } from '#clients/redis'
 import { SecretsClient, getSecret } from '#clients/secrets'
-import * as RedisCache from '#lib/redis-cache'
 import { getTrailers } from '#lib/trailers'
+import * as TwoTierCache from '#lib/two-tier-cache'
 import { mapErrorToResponse } from '#middleware/error-mapper'
 import { detectLanguage } from '#middleware/locale'
 import { withRequestLogging } from '#middleware/request-logger'
@@ -15,11 +16,12 @@ import { validateMovieId } from '#validators/detail'
 
 const deps = inject({
   tmdb: { getTrailers: TmdbDetail.getTrailers },
-  cache: { get: RedisCache.get, set: RedisCache.set },
+  cache: { get: TwoTierCache.get, set: TwoTierCache.set },
 })(
   inject({
     httpClient: createTmdbClient,
     redisClient: () => RedisClient(),
+    dynamoClient: () => DynamoClient(),
   })(
     inject({
       secretClient: { getSecret },

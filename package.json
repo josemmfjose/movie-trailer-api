@@ -19,7 +19,10 @@
     "cdk:local:bootstrap": "npx cdklocal bootstrap",
     "cdk:local:seed": "aws --endpoint-url=http://localhost:4566 --region us-east-1 secretsmanager put-secret-value --secret-id tmdb-api-key --secret-string '{\"apiKey\":\"test-tmdb-key-for-integration\"}'",
     "lint": "biome check --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "redis:cli": "docker exec -it movie-trailer-api-redis-1 redis-cli",
+    "redis:keys": "docker exec movie-trailer-api-redis-1 redis-cli KEYS '*'",
+    "dynamo:scan": "aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb scan --table-name TrailerApiCache"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.750.0",
