@@ -16,7 +16,7 @@ const redisClient = { client: redis }
 
 const TMDB_TOKEN = process.env.TMDB_READ_ACCESS_TOKEN
 
-const mockHttpClient = createTmdbClient(
+const mockTmdbClient = createTmdbClient(
   { secretClient: { getSecret: async () => 'test-tmdb-key' } },
   { baseUrl: TMDB_MOCK_URL },
 )
@@ -41,12 +41,12 @@ describe('Performance: Mock TMDB (localhost)', () => {
   const searchDeps = inject({
     tmdb: { searchMovies: TmdbSearch.searchMovies },
     cache: { get: RedisCache.get, set: RedisCache.set },
-  })({ httpClient: mockHttpClient, redisClient })
+  })({ tmdbClient: mockTmdbClient, redisClient })
 
   const detailDeps = inject({
     tmdb: { getDetail: TmdbDetail.getDetail },
     cache: { get: RedisCache.get, set: RedisCache.set },
-  })({ httpClient: mockHttpClient, redisClient })
+  })({ tmdbClient: mockTmdbClient, redisClient })
 
   it('cached search is faster than uncached', async () => {
     const params = { q: 'inception', page: 1, language: 'en-US' as Language, pageSize: 20 }
@@ -90,7 +90,7 @@ describe('Performance: Mock TMDB (localhost)', () => {
 })
 
 describeReal('Performance: Real TMDB (network)', () => {
-  const realHttpClient = createTmdbClient(
+  const realTmdbClient = createTmdbClient(
     { secretClient: { getSecret: async () => TMDB_TOKEN ?? '' } },
     { baseUrl: 'https://api.themoviedb.org/3' },
   )
@@ -98,12 +98,12 @@ describeReal('Performance: Real TMDB (network)', () => {
   const searchDeps = inject({
     tmdb: { searchMovies: TmdbSearch.searchMovies },
     cache: { get: RedisCache.get, set: RedisCache.set },
-  })({ httpClient: realHttpClient, redisClient })
+  })({ tmdbClient: realTmdbClient, redisClient })
 
   const detailDeps = inject({
     tmdb: { getDetail: TmdbDetail.getDetail },
     cache: { get: RedisCache.get, set: RedisCache.set },
-  })({ httpClient: realHttpClient, redisClient })
+  })({ tmdbClient: realTmdbClient, redisClient })
 
   it('cached search is faster than uncached', async () => {
     const params = { q: 'inception', page: 1, language: 'en-US' as Language, pageSize: 20 }
@@ -148,14 +148,14 @@ describeReal('Performance: Real TMDB (network)', () => {
 
 describe('Performance: Graceful Degradation', () => {
   it('returns fast error when TMDB is unreachable', async () => {
-    const brokenHttpClient = createTmdbClient(
+    const brokenTmdbClient = createTmdbClient(
       { secretClient: { getSecret: async () => 'test-key' } },
       { baseUrl: 'http://localhost:19999/3' },
     )
     const brokenDeps = inject({
       tmdb: { searchMovies: TmdbSearch.searchMovies },
       cache: { get: RedisCache.get, set: RedisCache.set },
-    })({ httpClient: brokenHttpClient, redisClient })
+    })({ tmdbClient: brokenTmdbClient, redisClient })
 
     const { result, ms } = await time(() =>
       searchMovies(brokenDeps)({ q: 'test', page: 1, language: 'en-US' as Language, pageSize: 20 }),

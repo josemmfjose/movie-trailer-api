@@ -11,7 +11,7 @@ import { TMDB_MOCK_URL, createFlushRedis, createTestRedis } from './setup'
 const redis = createTestRedis(1)
 const flushRedis = createFlushRedis(redis)
 
-const httpClient = createTmdbClient(
+const tmdbClient = createTmdbClient(
   { secretClient: { getSecret: async () => 'test-tmdb-key' } },
   { baseUrl: TMDB_MOCK_URL },
 )
@@ -20,7 +20,7 @@ const redisClient = { client: redis }
 const deps = inject({
   tmdb: { searchMovies: TmdbSearch.searchMovies },
   cache: { get: RedisCache.get, set: RedisCache.set },
-})({ httpClient, redisClient })
+})({ tmdbClient, redisClient })
 
 beforeAll(async () => {
   await redis.connect().catch(() => {})

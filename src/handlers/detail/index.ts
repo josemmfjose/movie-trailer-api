@@ -21,7 +21,7 @@ const deps = inject({
   cache: { get: cacheGet, set: cacheSet },
 })(
   inject({
-    httpClient: createTmdbClient,
+    tmdbClient: createTmdbClient,
     redis: { get: redisGet, set: redisSet },
     dynamo: { getItem, putItem },
   })({

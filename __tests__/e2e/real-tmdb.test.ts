@@ -10,7 +10,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import * as TmdbDetail from '#adapters/tmdb-detail.adapter'
 import * as TmdbSearch from '#adapters/tmdb-search.adapter'
-import { type HttpClient, createTmdbClient } from '#adapters/tmdb.client'
+import { type TmdbClient, createTmdbClient } from '#adapters/tmdb.client'
 import { getMovieDetail } from '#lib/detail'
 import { searchMovies } from '#lib/search'
 import { getTrailers } from '#lib/trailers'
@@ -36,10 +36,10 @@ const mockCache = {
 const describeIfToken = TMDB_TOKEN ? describe : describe.skip
 
 describeIfToken('E2E: Real TMDB API', () => {
-  let httpClient: HttpClient
+  let tmdbClient: TmdbClient
 
   beforeAll(() => {
-    httpClient = createTmdbClient(
+    tmdbClient = createTmdbClient(
       { secretClient: { getSecret: async () => TMDB_TOKEN ?? '' } },
       { baseUrl: 'https://api.themoviedb.org/3' },
     )
@@ -49,7 +49,7 @@ describeIfToken('E2E: Real TMDB API', () => {
     it('searches for "inception" and returns results', async () => {
       const deps = inject({
         tmdb: { searchMovies: TmdbSearch.searchMovies },
-      })({ httpClient })
+      })({ tmdbClient })
       const result = await searchMovies({ ...deps, cache: mockCache })({
         q: 'inception',
         page: 1,
@@ -71,7 +71,7 @@ describeIfToken('E2E: Real TMDB API', () => {
 
     it('returns pagination with correct metadata', async () => {
       const deps = {
-        ...inject({ tmdb: { searchMovies: TmdbSearch.searchMovies } })({ httpClient }),
+        ...inject({ tmdb: { searchMovies: TmdbSearch.searchMovies } })({ tmdbClient }),
         cache: mockCache,
       }
       const result = await searchMovies(deps)({
@@ -93,7 +93,7 @@ describeIfToken('E2E: Real TMDB API', () => {
 
     it('returns empty results for nonsense query', async () => {
       const deps = {
-        ...inject({ tmdb: { searchMovies: TmdbSearch.searchMovies } })({ httpClient }),
+        ...inject({ tmdb: { searchMovies: TmdbSearch.searchMovies } })({ tmdbClient }),
         cache: mockCache,
       }
       const result = await searchMovies(deps)({
@@ -112,7 +112,7 @@ describeIfToken('E2E: Real TMDB API', () => {
 
     it('handles Spanish language search', async () => {
       const deps = {
-        ...inject({ tmdb: { searchMovies: TmdbSearch.searchMovies } })({ httpClient }),
+        ...inject({ tmdb: { searchMovies: TmdbSearch.searchMovies } })({ tmdbClient }),
         cache: mockCache,
       }
       const result = await searchMovies(deps)({
@@ -134,7 +134,7 @@ describeIfToken('E2E: Real TMDB API', () => {
   describe('Movie Detail', () => {
     it('returns full detail for Inception (27205)', async () => {
       const deps = {
-        ...inject({ tmdb: { getDetail: TmdbDetail.getDetail } })({ httpClient }),
+        ...inject({ tmdb: { getDetail: TmdbDetail.getDetail } })({ tmdbClient }),
         cache: mockCache,
       }
       const result = await getMovieDetail(deps)(27205, 'en-US' as Language)
@@ -160,7 +160,7 @@ describeIfToken('E2E: Real TMDB API', () => {
 
     it('returns trailers embedded via append_to_response', async () => {
       const deps = {
-        ...inject({ tmdb: { getDetail: TmdbDetail.getDetail } })({ httpClient }),
+        ...inject({ tmdb: { getDetail: TmdbDetail.getDetail } })({ tmdbClient }),
         cache: mockCache,
       }
       const result = await getMovieDetail(deps)(27205, 'en-US' as Language)
@@ -179,7 +179,7 @@ describeIfToken('E2E: Real TMDB API', () => {
 
     it('returns detail for Fight Club (550)', async () => {
       const deps = {
-        ...inject({ tmdb: { getDetail: TmdbDetail.getDetail } })({ httpClient }),
+        ...inject({ tmdb: { getDetail: TmdbDetail.getDetail } })({ tmdbClient }),
         cache: mockCache,
       }
       const result = await getMovieDetail(deps)(550, 'en-US' as Language)
@@ -195,7 +195,7 @@ describeIfToken('E2E: Real TMDB API', () => {
   describe('Trailers (standalone)', () => {
     it('returns trailers for Inception', async () => {
       const deps = {
-        ...inject({ tmdb: { getTrailers: TmdbDetail.getTrailers } })({ httpClient }),
+        ...inject({ tmdb: { getTrailers: TmdbDetail.getTrailers } })({ tmdbClient }),
         cache: mockCache,
       }
       const result = await getTrailers(deps)(27205, 'en-US' as Language)
@@ -212,7 +212,7 @@ describeIfToken('E2E: Real TMDB API', () => {
 
     it('filters to only Trailer type (not Featurette/BTS)', async () => {
       const deps = {
-        ...inject({ tmdb: { getTrailers: TmdbDetail.getTrailers } })({ httpClient }),
+        ...inject({ tmdb: { getTrailers: TmdbDetail.getTrailers } })({ tmdbClient }),
         cache: mockCache,
       }
       const result = await getTrailers(deps)(27205, 'en-US' as Language)

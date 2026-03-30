@@ -103,7 +103,7 @@ export type SecretClient = {
   getSecret: (name: string) => ResultAsync<string, AppError>
 }
 
-export type HttpClient = {
+export type TmdbClient = {
   request: <S extends ZodTypeAny>(path: string, schema: S) => ResultAsync<ZodOutput<S>, AppError>
 }
 
@@ -122,7 +122,7 @@ export type TmdbClientConfig = {
 export const createTmdbClient = (
   deps: TmdbClientDeps,
   config: TmdbClientConfig = {},
-): HttpClient => {
+): TmdbClient => {
   const baseUrl = config.baseUrl ?? process.env.TMDB_BASE_URL ?? 'https://api.themoviedb.org/3'
   const timeoutMs = config.timeoutMs ?? 3_000
   const circuitConfig = { ...defaultCircuitConfig, ...config.circuitBreaker }
