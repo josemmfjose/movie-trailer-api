@@ -1,38 +1,56 @@
-import type { UnionToIntersection } from 'type-fest'
+type FnWithDeps = (dep: never) => unknown
+type Injectable = { [key: string]: Injectable | FnWithDeps }
 
-// biome-ignore lint: any needed for generic DI
-type Fn = (...args: any[]) => any
-type InjectableLeaf = Fn
-type InjectableNode = { [key: string]: InjectableLeaf | InjectableNode }
-type Injectable = InjectableNode
+type Fn<T> = T extends () => infer F
+  ? { arg: never; return: F }
+  : T extends (dep: infer D) => infer F
+    ? { arg: D; return: F }
+    : never
 
 type Inject<T extends Injectable> = {
-  [K in keyof T]: T[K] extends Fn
-    ? ReturnType<T[K]>
+  [K in keyof T]: T[K] extends FnWithDeps
+    ? Fn<T[K]>['return']
     : T[K] extends Injectable
       ? Inject<T[K]>
       : never
 }
 
-type InjectedDeps<T extends Injectable> = {
-  [K in keyof T]: T[K] extends (deps: infer D) => unknown
-    ? D
-    : T[K] extends Injectable
-      ? InjectedDeps<T[K]>
-      : never
-}[keyof T]
+type InjectedDeps<T extends Injectable | FnWithDeps> = T extends FnWithDeps
+  ? Fn<T>['arg']
+  : {
+      [K in keyof T]: T[K] extends Injectable | FnWithDeps ? InjectedDeps<T[K]> : never
+    }[keyof T]
+
+type UnionToIntersection<Union> = (
+  Union extends unknown ? (distributedUnion: Union) => void : never
+) extends (mergedIntersection: infer Intersection) => void
+  ? Intersection & Union
+  : never
+
+type PrettyDeep<T> = T extends unknown
+  ? {
+      [K in keyof T]: T[K] extends Record<string, unknown> ? PrettyDeep<T[K]> : T[K]
+    }
+  : never
 
 export const inject =
-  <const T extends Injectable>(obj: T) =>
-  (deps: UnionToIntersection<InjectedDeps<T>>): Inject<T> => {
-    const result = {} as Record<string, unknown>
+  <
+    const T extends Injectable,
+    const D = PrettyDeep<UnionToIntersection<InjectedDeps<T>>>,
+    const R = PrettyDeep<Inject<T>>,
+  >(
+    obj: T,
+  ) =>
+  (deps: D): R => {
+    const result = {} as R
     for (const key in obj) {
       const value = obj[key]
-      if (typeof value === 'function') {
-        result[key] = (value as Fn)(deps)
-      } else if (typeof value === 'object' && value !== null) {
-        result[key] = inject(value as Injectable)(deps as never)
+      if (value) {
+        // biome-ignore lint: runtime cast needed — D is a computed generic
+        result[key as unknown as keyof R] = (
+          typeof value === 'function' ? (value as any)(deps) : inject(value)(deps as never)
+        ) as R[keyof R]
       }
     }
-    return result as Inject<T>
+    return result
   }

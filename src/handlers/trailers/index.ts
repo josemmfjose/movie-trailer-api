@@ -22,7 +22,7 @@ const deps = inject({
     redisClient: () => RedisClient(),
   })(
     inject({
-      secretClients: { getSecret },
+      secretClient: { getSecret },
     })(SecretsClient()),
   ),
 )
