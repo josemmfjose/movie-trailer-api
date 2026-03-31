@@ -8,7 +8,7 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { type AppError, InternalError } from '#shared/errors'
 import type { ResultAsync } from '#shared/result'
 import { fromPromise } from '#shared/result'
-import { type CacheEntry, CacheEntrySchema, cacheKeys } from '../schemas/cache-entry'
+import { type CacheEntry, CacheEntrySchema, cacheTable } from '../schemas/cache-entry'
 
 type CacheDeps = {
   dynamoClient: {
@@ -20,7 +20,7 @@ type CacheDeps = {
 export const getItem =
   (deps: CacheDeps) =>
   (
-    entityType: string,
+    entityType: CacheEntry['entityType'],
     cacheKey: string,
     language: string,
   ): ResultAsync<CacheEntry | null, AppError> =>
@@ -31,8 +31,8 @@ export const getItem =
           new GetItemCommand({
             TableName: tableName,
             Key: marshall({
-              PK: cacheKeys.pk(entityType, language),
-              SK: cacheKeys.sk(cacheKey),
+              PK: cacheTable.pk({ entityType, language }),
+              SK: cacheTable.sk({ cacheKey }),
             }),
           }),
         )
@@ -57,14 +57,7 @@ export const putItem =
         await db.send(
           new PutItemCommand({
             TableName: tableName,
-            Item: marshall(
-              {
-                PK: cacheKeys.pk(entry.entityType, entry.language),
-                SK: cacheKeys.sk(entry.cacheKey),
-                ...entry,
-              },
-              { removeUndefinedValues: true },
-            ),
+            Item: marshall(cacheTable.toEntry(entry), { removeUndefinedValues: true }),
           }),
         )
       })(),
@@ -76,7 +69,7 @@ export const putItem =
 
 export const deleteItem =
   (deps: CacheDeps) =>
-  (entityType: string, cacheKey: string, language: string): ResultAsync<void, AppError> =>
+  (entityType: CacheEntry['entityType'], cacheKey: string, language: string): ResultAsync<void, AppError> =>
     fromPromise(
       (async () => {
         const { db, tableName } = deps.dynamoClient
@@ -84,8 +77,8 @@ export const deleteItem =
           new DeleteItemCommand({
             TableName: tableName,
             Key: marshall({
-              PK: cacheKeys.pk(entityType, language),
-              SK: cacheKeys.sk(cacheKey),
+              PK: cacheTable.pk({ entityType, language }),
+              SK: cacheTable.sk({ cacheKey }),
             }),
           }),
         )

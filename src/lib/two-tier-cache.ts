@@ -1,5 +1,5 @@
 import type { ZodTypeAny, output as ZodOutput } from 'zod'
-import type { CacheEntry } from '#data/schemas/cache-entry'
+import { type CacheEntry, CacheEntrySchema } from '#data/schemas/cache-entry'
 import type { AppError } from '#shared/errors'
 import { InternalError } from '#shared/errors'
 import { logger } from '#shared/logger'
@@ -13,7 +13,7 @@ type TwoTierDeps = {
   }
   dynamo: {
     getItem: (
-      entityType: string,
+      entityType: CacheEntry['entityType'],
       cacheKey: string,
       language: string,
     ) => ResultAsync<CacheEntry | null, AppError>
@@ -21,9 +21,14 @@ type TwoTierDeps = {
   }
 }
 
-const parseCacheKey = (key: string): { entityType: string; language: string; cacheKey: string } => {
-  const [entityType, language, ...rest] = key.split(':')
-  return { entityType: entityType!, language: language!, cacheKey: rest.join(':') }
+const entityTypeSchema = CacheEntrySchema.shape.entityType
+
+const parseCacheKey = (key: string) => {
+  const parts = key.split(':')
+  const entityType = entityTypeSchema.parse(parts[0])
+  const language = parts[1] ?? 'en-US'
+  const cacheKey = parts.slice(2).join(':')
+  return { entityType, language, cacheKey }
 }
 
 export const get =
@@ -85,7 +90,7 @@ export const set =
         // L2: DynamoDB (fire-and-forget)
         const staleMs = ttlMs * 3
         const entry: CacheEntry = {
-          entityType: entityType as CacheEntry['entityType'],
+          entityType,
           cacheKey,
           language,
           data: JSON.stringify(data),

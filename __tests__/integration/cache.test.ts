@@ -3,7 +3,7 @@ import { unmarshall } from '@aws-sdk/util-dynamodb'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import * as CacheRepo from '#data/repositories/cache.repository'
-import { cacheKeys } from '#data/schemas/cache-entry'
+import { cacheTable } from '#data/schemas/cache-entry'
 import { get as redisGet, set as redisSet } from '#lib/redis-cache'
 import { get as cacheGet, set as cacheSet } from '#lib/two-tier-cache'
 import { isError } from '#shared/result'
@@ -117,8 +117,8 @@ describe('DynamoDB Cache Repository Integration', () => {
     })
 
     // Verify raw DynamoDB key structure
-    const pk = cacheKeys.pk('SEARCH', 'en-US')
-    const sk = cacheKeys.sk('test:1')
+    const pk = cacheTable.pk({ entityType: 'SEARCH', language: 'en-US' })
+    const sk = cacheTable.sk({ cacheKey: 'test:1' })
     const raw = await dynamodb.send(
       new GetItemCommand({
         TableName: TABLE_NAME,
