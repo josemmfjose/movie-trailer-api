@@ -50,8 +50,10 @@ export function* ok(result: unknown): Generator<unknown, unknown, unknown> {
   return result
 }
 
-// biome-ignore lint: any needed — generator yield/next channels are untyped by design
-export const safeTry = async <R>(gen: () => AsyncGenerator<any, R, any>): Promise<R> => {
+export const safeTry = async <T, Y>(
+  gen: () => AsyncGenerator<Y, T, unknown>,
+): Promise<T | Extract<Y, Error>> => {
+  type E = Extract<Y, Error>
   const iterator = gen()
   let next = await iterator.next()
 
@@ -60,12 +62,12 @@ export const safeTry = async <R>(gen: () => AsyncGenerator<any, R, any>): Promis
 
     if (yielded instanceof Promise) {
       const resolved = await yielded
-      if (isError(resolved)) return resolved as R
+      if (isError(resolved)) return resolved as E
       next = await iterator.next(resolved)
       continue
     }
 
-    if (isError(yielded)) return yielded as R
+    if (isError(yielded)) return yielded as E
 
     next = await iterator.next(yielded)
   }
