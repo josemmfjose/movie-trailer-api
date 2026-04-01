@@ -12,7 +12,7 @@ export const trailersProcessor =
   (deps: PickDeep<ServiceDeps, 'tmdb.getTrailers' | 'cache'>) =>
   async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> =>
     okOr(
-      await safeTry(async function* () {
+      safeTry(async function* () {
         const movieId = yield* ok(validateMovieId(event.pathParameters?.id))
         const language = detectLanguage(event.queryStringParameters, event.headers)
         const result = yield* ok(getTrailers(deps)(movieId, language))

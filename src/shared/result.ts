@@ -19,11 +19,23 @@ export const fromPromise = <T, E extends Error>(
   mapError: (e: unknown) => E,
 ): ResultAsync<T, E> => promise.then((v) => v as T | E).catch((e) => mapError(e))
 
-export const okOr = <R, F>(
+export function okOr<R extends Awaited<P>, F, P extends Promise<unknown>>(
+  result: P,
+  fallback: (e: Extract<R, Error>) => F,
+): Promise<Exclude<R, Error> | F>
+export function okOr<R, F>(
   result: R,
   fallback: (e: Extract<R, Error>) => F,
-): Exclude<R, Error> | F =>
-  isError(result) ? fallback(result as Extract<R, Error>) : (result as Exclude<R, Error>)
+): Exclude<R, Error> | F
+export function okOr<R, F>(
+  result: R | Promise<R>,
+  fallback: (e: Extract<R, Error>) => F,
+): Exclude<R, Error> | F | Promise<Exclude<R, Error> | F> {
+  if (result instanceof Promise) {
+    return result.then((r) => okOr(r, fallback))
+  }
+  return isError(result) ? fallback(result as Extract<R, Error>) : (result as Exclude<R, Error>)
+}
 
 // Generator-based composition: yield* ok(result) unwraps T or short-circuits with E
 // Async overload: unwraps Promise<T | E> by yielding the promise to safeTry

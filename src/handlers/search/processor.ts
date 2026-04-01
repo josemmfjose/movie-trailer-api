@@ -11,7 +11,7 @@ export const searchProcessor =
   (deps: PickDeep<ServiceDeps, 'tmdb.searchMovies' | 'cache'>) =>
   async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> =>
     okOr(
-      await safeTry(async function* () {
+      safeTry(async function* () {
         const params = yield* ok(validateSearch(event.queryStringParameters ?? null))
         const result = yield* ok(searchMovies(deps)(params))
         return {
